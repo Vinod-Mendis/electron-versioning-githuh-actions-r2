@@ -1,6 +1,6 @@
 {
   "name": "electron-version-r2",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Small Electron + React app that updates from Cloudflare R2",
   "main": "./out/main/index.js",
   "author": "FLYXTO",

@@ -1,32 +1,33 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useState } from "react";
 
 export default function App() {
-  const [version, setVersion] = useState('...')
-  const [status, setStatus] = useState('Waiting...')
-  const [updateReady, setUpdateReady] = useState(false)
+  const [version, setVersion] = useState("...");
+  const [status, setStatus] = useState("Waiting...");
+  const [updateReady, setUpdateReady] = useState(false);
 
   useEffect(() => {
     if (!window.appInfo) {
-      setVersion('1.0.0')
-      setStatus('Open this screen inside the Electron window.')
-      return
+      setVersion("1.0.0");
+      setStatus("Open this screen inside the Electron window.");
+      return;
     }
 
-    window.appInfo.version().then(setVersion)
+    window.appInfo.version().then(setVersion);
 
-    const stopStatus = window.appInfo.onStatus(setStatus)
-    const stopReady = window.appInfo.onUpdateReady(() => setUpdateReady(true))
+    const stopStatus = window.appInfo.onStatus(setStatus);
+    const stopReady = window.appInfo.onUpdateReady(() => setUpdateReady(true));
 
     return () => {
-      stopStatus()
-      stopReady()
-    }
-  }, [])
+      stopStatus();
+      stopReady();
+    };
+  }, []);
 
   return (
     <main>
       <p className="eyebrow">FLYXTO</p>
       <h1>Version R2</h1>
+      <p>Test change done by Vinod</p>
       <p className="version">Installed version {version}</p>
       <p className="status">{status}</p>
       {updateReady && (
@@ -35,5 +36,5 @@ export default function App() {
         </button>
       )}
     </main>
-  )
+  );
 }
