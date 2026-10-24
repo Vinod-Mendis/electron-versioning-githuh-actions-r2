@@ -26,5 +26,5 @@ nsis:
 npmRebuild: false
 publish:
   provider: generic
-  # GitHub Actions sets R2_PUBLIC_URL from the repository secret. It must end with a slash.
-  url: ${env.R2_PUBLIC_URL}
+  # electron-builder only expands env names made of letters. FEED_URL is set from the R2_PUBLIC_URL secret.
+  url: ${env.FEED_URL}

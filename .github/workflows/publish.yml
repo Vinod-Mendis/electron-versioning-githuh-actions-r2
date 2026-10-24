@@ -44,7 +44,7 @@ jobs:
 
       - name: Build the Windows installer
         env:
-          R2_PUBLIC_URL: ${{ secrets.R2_PUBLIC_URL }}
+          FEED_URL: ${{ secrets.R2_PUBLIC_URL }}
         run: npm run dist
 
       - name: Keep the setup exe as an Actions artifact
