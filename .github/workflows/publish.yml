@@ -1,0 +1,97 @@
+name: Publish to R2
+
+on:
+  push:
+    branches:
+      - main
+
+concurrency:
+  group: r2-publish
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  dist:
+    runs-on: windows-latest
+    steps:
+      - name: Check out the source
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Require the public R2 URL
+        shell: pwsh
+        env:
+          R2_PUBLIC_URL: ${{ secrets.R2_PUBLIC_URL }}
+        run: |
+          if ([string]::IsNullOrWhiteSpace($env:R2_PUBLIC_URL)) {
+            Write-Error "The R2_PUBLIC_URL secret is missing."
+            exit 1
+          }
+          if (-not $env:R2_PUBLIC_URL.EndsWith("/")) {
+            Write-Error "The R2_PUBLIC_URL secret must end with a slash."
+            exit 1
+          }
+
+      - name: Build the Windows installer
+        env:
+          R2_PUBLIC_URL: ${{ secrets.R2_PUBLIC_URL }}
+        run: npm run dist
+
+      - name: Keep the setup exe as an Actions artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: setup-exe
+          path: dist/*-setup.exe
+          if-no-files-found: error
+          retention-days: 90
+
+      - name: Check that the AWS CLI is available
+        run: aws --version
+
+      - name: Upload latest.yml, the setup exe, and the blockmap to R2
+        shell: pwsh
+        env:
+          AWS_ACCESS_KEY_ID: ${{ secrets.R2_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.R2_SECRET_ACCESS_KEY }}
+          AWS_DEFAULT_REGION: auto
+          R2_ACCOUNT_ID: ${{ secrets.R2_ACCOUNT_ID }}
+          R2_BUCKET: ${{ secrets.R2_BUCKET }}
+        run: |
+          if ([string]::IsNullOrWhiteSpace($env:R2_ACCOUNT_ID) -or
+              [string]::IsNullOrWhiteSpace($env:R2_BUCKET) -or
+              [string]::IsNullOrWhiteSpace($env:AWS_ACCESS_KEY_ID) -or
+              [string]::IsNullOrWhiteSpace($env:AWS_SECRET_ACCESS_KEY)) {
+            Write-Error "One or more R2 secrets are missing."
+            exit 1
+          }
+
+          $latest = @(Get-ChildItem -Path dist -Filter "latest.yml" -File)
+          $setup = @(Get-ChildItem -Path dist -Filter "*-setup.exe" -File)
+          $blockmap = @(Get-ChildItem -Path dist -Filter "*-setup.exe.blockmap" -File)
+
+          if ($latest.Count -ne 1 -or $setup.Count -ne 1 -or $blockmap.Count -ne 1) {
+            Write-Error "Expected exactly one latest.yml, one setup exe, and one blockmap."
+            exit 1
+          }
+
+          $endpoint = "https://$($env:R2_ACCOUNT_ID).r2.cloudflarestorage.com"
+          $destination = "s3://$($env:R2_BUCKET)"
+
+          aws s3 cp $latest[0].FullName "$destination/latest.yml" --endpoint-url $endpoint --only-show-errors --cache-control "public, max-age=60"
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+
+          aws s3 cp $setup[0].FullName "$destination/$($setup[0].Name)" --endpoint-url $endpoint --only-show-errors
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+
+          aws s3 cp $blockmap[0].FullName "$destination/$($blockmap[0].Name)" --endpoint-url $endpoint --only-show-errors
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }

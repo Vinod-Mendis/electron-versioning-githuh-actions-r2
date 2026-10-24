@@ -1,0 +1,25 @@
+{
+  "name": "electron-version-r2",
+  "version": "1.0.0",
+  "description": "Small Electron + React app that updates from Cloudflare R2",
+  "main": "./out/main/index.js",
+  "author": "FLYXTO",
+  "license": "MIT",
+  "scripts": {
+    "dev": "electron-vite dev",
+    "build": "electron-vite build",
+    "dist": "npm run build && node scripts/assert-feed-url.js && electron-builder --win --config electron-builder.yml"
+  },
+  "dependencies": {
+    "electron-updater": "^6.7.3"
+  },
+  "devDependencies": {
+    "@vitejs/plugin-react": "^5.0.4",
+    "electron": "^39.2.7",
+    "electron-builder": "^26.0.12",
+    "electron-vite": "^4.0.1",
+    "react": "^19.2.0",
+    "react-dom": "^19.2.0",
+    "vite": "^7.1.10"
+  }
+}

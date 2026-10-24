@@ -1,0 +1,30 @@
+appId: com.flyxto.versionr2
+productName: Version R2
+directories:
+  output: dist
+  buildResources: build
+files:
+  - "!**/.vscode/*"
+  - "!src/*"
+  - "!electron.vite.config.{js,ts,mjs,cjs}"
+  - "!{.gitignore,.npmrc,package-lock.json}"
+  - "!scripts/*"
+  - "!.github/*"
+asarUnpack:
+  - resources/**
+win:
+  executableName: version-r2
+  target:
+    - nsis
+nsis:
+  artifactName: ${name}-${version}-setup.${ext}
+  shortcutName: ${productName}
+  uninstallDisplayName: ${productName}
+  createDesktopShortcut: always
+  oneClick: false
+  allowToChangeInstallationDirectory: true
+npmRebuild: false
+publish:
+  provider: generic
+  # GitHub Actions sets R2_PUBLIC_URL from the repository secret. It must end with a slash.
+  url: ${env.R2_PUBLIC_URL}
